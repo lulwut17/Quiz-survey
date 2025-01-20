@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Animated Survey</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #1a1a2e, #16213e);
+            color: #fff;
+            overflow-x: hidden;
+        }
+
+        .background-animation {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        .floating-shape {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            animation: float 15s infinite linear;
+        }
+
+        @keyframes float {
+            0% {
+                transform: translate(0, 0) rotate(0deg);
+            }
+            33% {
+                transform: translate(30px, 30px) rotate(120deg);
+            }
+            66% {
+                transform: translate(-30px, 50px) rotate(240deg);
+            }
+            100% {
+                transform: translate(0, 0) rotate(360deg);
+            }
+        }
+
+        .survey-container {
+            position: relative;
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 30px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            z-index: 1;
+        }
+
+        .question-card {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.5s ease;
+        }
+
+        .question-card.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .question {
+            font-size: 1.2em;
+            margin-bottom: 20px;
+            color: #fff;
+        }
+
+        .options {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .option {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .option:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateX(10px);
+        }
+
+        .option.selected {
+            background: rgba(82, 113, 255, 0.3);
+        }
+
+        .progress-bar {
+            height: 6px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+            margin: 20px 0;
+            overflow: hidden;
+        }
+
+        .progress {
+            height: 100%;
+            background: linear-gradient(90deg, #5271ff, #82a0ff);
+            width: 0;
+            transition: width 0.5s ease;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 15px;
+            margin-top: 30px;
+        }
+
+        button {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: all 0.3s ease;
+        }
+
+        .prev-btn {
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+        }
+
+        .next-btn {
+            background: linear-gradient(90deg, #5271ff, #82a0ff);
+            color: #fff;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        .submit-btn {
+            background: linear-gradient(90deg, #50c878, #3cb371);
+            color: #fff;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        .submit-btn:hover {
+            animation: pulse 1s infinite;
+        }
+    </style>
+</head>
+<body>
+    <div class="background-animation" id="backgroundAnimation"></div>
+    
+    <div class="survey-container">
+        <h1 style="margin-bottom: 30px;">Interactive Survey</h1>
+        <div class="progress-bar">
+            <div class="progress" id="progress"></div>
+        </div>
+        <div id="questionContainer"></div>
+        <div class="button-group">
+            <button class="prev-btn" id="prevBtn">Previous</button>
+            <button class="next-btn" id="nextBtn">Next</button>
+            <button class="submit-btn" id="submitBtn" style="display: none;">Submit</button>
+        </div>
+    </div>
+
+    <script>
+        // Create animated background shapes
+        function createBackgroundShapes() {
+            const container = document.getElementById('backgroundAnimation');
+            const shapes = 15;
+
+            for (let i = 0; i < shapes; i++) {
+                const shape = document.createElement('div');
+                shape.className = 'floating-shape';
+                
+                const size = Math.random() * 100 + 50;
+                shape.style.width = `${size}px`;
+                shape.style.height = `${size}px`;
+                
+                shape.style.left = `${Math.random() * 100}%`;
+                shape.style.top = `${Math.random() * 100}%`;
+                
+                shape.style.animationDelay = `${Math.random() * 5}s`;
+                shape.style.animationDuration = `${15 + Math.random() * 15}s`;
+                
+                container.appendChild(shape);
+            }
+        }
+
+        const questions = [
+            {
+                question: "How satisfied are you with our service?",
+                options: ["Very Satisfied", "Satisfied", "Neutral", "Dissatisfied", "Very Dissatisfied"]
+            },
+            {
+                question: "How likely are you to recommend us to others?",
+                options: ["Very Likely", "Likely", "Neutral", "Unlikely", "Very Unlikely"]
+            },
+            {
+                question: "How often do you use our service?",
+                options: ["Daily", "Weekly", "Monthly", "Rarely", "Never"]
+            },
+            {
+                question: "How would you rate our user interface?",
+                options: ["Excellent", "Good", "Average", "Below Average", "Poor"]
+            },
+            {
+                question: "What is your overall experience with our support team?",
+                options: ["Excellent", "Good", "Average", "Below Average", "Poor"]
+            }
+        ];
+
+        let currentQuestion = 0;
+        const questionContainer = document.getElementById('questionContainer');
+        const prevBtn = document.getElementById('prevBtn');
+        const nextBtn = document.getElementById('nextBtn');
+        const submitBtn = document.getElementById('submitBtn');
+        const progress = document.getElementById('progress');
+
+        function showQuestion(index) {
+            const question = questions[index];
+            const questionCard = document.createElement('div');
+            questionCard.className = 'question-card';
+            
+            questionCard.innerHTML = `
+                <div class="question">${question.question}</div>
+                <div class="options">
+                    ${question.options.map((option, i) => `
+                        <div class="option" data-index="${i}">
+                            ${option}
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+
+            questionContainer.innerHTML = '';
+            questionContainer.appendChild(questionCard);
+
+            // Add selection functionality
+            const options = questionCard.querySelectorAll('.option');
+            options.forEach(option => {
+                option.addEventListener('click', () => {
+                    options.forEach(opt => opt.classList.remove('selected'));
+                    option.classList.add('selected');
+                });
+            });
+
+            // Trigger animation
+            setTimeout(() => {
+                questionCard.classList.add('active');
+            }, 50);
+
+            updateNavigation();
+            updateProgress();
+        }
+
+        function updateNavigation() {
+            prevBtn.style.display = currentQuestion === 0 ? 'none' : 'block';
+            nextBtn.style.display = currentQuestion === questions.length - 1 ? 'none' : 'block';
+            submitBtn.style.display = currentQuestion === questions.length - 1 ? 'block' : 'none';
+        }
+
+        function updateProgress() {
+            const percentage = ((currentQuestion + 1) / questions.length) * 100;
+            progress.style.width = `${percentage}%`;
+        }
+
+        prevBtn.addEventListener('click', () => {
+            if (currentQuestion > 0) {
+                currentQuestion--;
+                showQuestion(currentQuestion);
+            }
+        });
+
+        nextBtn.addEventListener('click', () => {
+            if (currentQuestion < questions.length - 1) {
+                const selected = document.querySelector('.option.selected');
+                if (selected) {
+                    currentQuestion++;
+                    showQuestion(currentQuestion);
+                } else {
+                    alert('Please select an option before proceeding.');
+                }
+            }
+        });
+
+        submitBtn.addEventListener('click', () => {
+            const selected = document.querySelector('.option.selected');
+            if (selected) {
+                // Here you would typically collect all answers and submit them
+                alert('Thank you for completing the survey!');
+                // You can add code here to send the data to a server
+            } else {
+                alert('Please select an option before submitting.');
+            }
+        });
+
+        // Initialize
+        createBackgroundShapes();
+        showQuestion(currentQuestion);
+    </script>
+</body>
+</html>
